@@ -1,0 +1,25 @@
+{
+  "name": "typescript_blog_aggregator",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "start": "tsx ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RiMaBo/typescript_blog_aggregator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RiMaBo/typescript_blog_aggregator/issues"
+  },
+  "homepage": "https://github.com/RiMaBo/typescript_blog_aggregator#readme",
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
