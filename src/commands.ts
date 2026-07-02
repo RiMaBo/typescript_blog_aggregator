@@ -1,16 +1,16 @@
-type CommandHandler = (cmdName: string, ...args: string[]) => void;
+type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 type CommandsRegistry = Record<string, CommandHandler>;
 
 export function registerCommand(registry: CommandsRegistry, cmdName: string, handler: CommandHandler): void {
     registry[cmdName] = handler;
 }
 
-export function runCommand(registry: CommandsRegistry, cmdName: string, ...args: string[]): void {
+export async function runCommand(registry: CommandsRegistry, cmdName: string, ...args: string[]): Promise<void> {
     const handler = registry[cmdName];
 
     if (handler === undefined) {
         throw new Error(`Command Not Found: ${cmdName}`);
     }
 
-    handler(cmdName, ...args);
+    await handler(cmdName, ...args);
 }

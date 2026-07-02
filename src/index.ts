@@ -1,8 +1,8 @@
 import { registerCommand, runCommand } from "./commands";
-import { handlerLogin } from "./handler_user";
+import { handlerLogin, handlerRegister } from "./handler_user";
 
 
-function main() {
+async function main() {
     const args = process.argv.slice(2);
     if (!args.length) {
         console.log("Usage: cli <command> [args...]");
@@ -14,9 +14,10 @@ function main() {
     const cmdsRegistry: CommandsRegistry = {};
 
     registerCommand(cmdsRegistry, "login", handlerLogin);
+    registerCommand(cmdsRegistry, "register", handlerRegister);
 
     try {
-        runCommand(cmdsRegistry, cmdName, ...cmdArgs);
+        await runCommand(cmdsRegistry, cmdName, ...cmdArgs);
     } catch (err) {
         if (err instanceof Error) {
             console.error(`Error running command ${cmdName}: ${err.message}`);
@@ -26,6 +27,8 @@ function main() {
 
         process.exit(1);
     }
+
+    process.exit(0);
 }
 
 main();
