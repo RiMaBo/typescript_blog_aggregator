@@ -1,5 +1,5 @@
 import { setUser } from "./config"
-import { getUser, createUser } from "./lib/db/queries/users"
+import { getUser, createUser, deleteUsers } from "./lib/db/queries/users"
 
 
 export async function handlerLogin(cmdName: string, ...args: string[]) {
@@ -15,7 +15,7 @@ export async function handlerLogin(cmdName: string, ...args: string[]) {
     }
 
     setUser(foundUser.name);
-    console.log("User Switched Successfully.");
+    console.log("User Switched Successfully");
 }
 
 export async function handlerRegister(cmdName: string, ...args: string[]) {
@@ -35,8 +35,17 @@ export async function handlerRegister(cmdName: string, ...args: string[]) {
         throw new Error(`Error creating user ${userName}`);
     }
 
-    console.log(`User ${userName} created successfully.`);
+    console.log(`User ${userName} created successfully`);
 
     setUser(createdUser.name);
-    console.log("User Switched Successfully.");
+    console.log("User Switched Successfully");
+}
+
+export async function handlerReset(_: string) {
+    const result = await deleteUsers();
+    if (!result) {
+        throw new Error(`Error running Reset command: ${result}`);
+    }
+
+    console.log("Database reset successfully")
 }
