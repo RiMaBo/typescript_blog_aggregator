@@ -1,5 +1,5 @@
-import { setUser } from "./config"
-import { getUser, createUser, deleteUsers } from "./lib/db/queries/users"
+import { setUser, readConfig } from "./config"
+import { getUser, createUser, getUsers } from "./lib/db/queries/users"
 
 
 export async function handlerLogin(cmdName: string, ...args: string[]) {
@@ -41,11 +41,19 @@ export async function handlerRegister(cmdName: string, ...args: string[]) {
     console.log("User Switched Successfully");
 }
 
-export async function handlerReset(_: string) {
-    const result = await deleteUsers();
-    if (!result) {
-        throw new Error(`Error running Reset command: ${result}`);
+export async function handlerListUsers(_: string) {
+    const cfg = readConfig();
+
+    const users = await getUsers();
+    if (!users) {
+        throw new Error("Error running Users command");
     }
 
-    console.log("Database reset successfully")
+    users.forEach((user) => {
+       if (user.name === cfg.currentUserName) {
+           console.log(`* ${user.name} (current)`);
+        } else {
+            console.log(`* ${user.name}`);
+        }
+    });
 }
