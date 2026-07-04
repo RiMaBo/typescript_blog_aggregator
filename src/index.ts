@@ -1,6 +1,7 @@
 import { registerCommand, runCommand } from "./commands";
 import { handlerLogin, handlerRegister, handlerListUsers } from "./handler_user";
 import { handlerReset } from "./handler_reset"
+import { handlerAgg } from "./handler_feed"
 
 
 async function main() {
@@ -18,6 +19,7 @@ async function main() {
     registerCommand(cmdsRegistry, "register", handlerRegister);
     registerCommand(cmdsRegistry, "reset", handlerReset);
     registerCommand(cmdsRegistry, "users", handlerListUsers);
+    registerCommand(cmdsRegistry, "agg", handlerAgg);
 
     try {
         await runCommand(cmdsRegistry, cmdName, ...cmdArgs);
