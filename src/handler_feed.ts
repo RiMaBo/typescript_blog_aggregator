@@ -1,3 +1,8 @@
+import { readConfig } from "./config"
+import { getUser } from "./lib/db/queries/users"
+import { createFeed } from "./lib/db/queries/feeds"
+import { Feed, User } from "./src/lib/db/schema";
+
 import { XMLParser } from "fast-xml-parser"
 
 
@@ -16,6 +21,15 @@ type RSSItem = {
     description: string;
     pubDate: string;
 };
+
+function printFeed(feed: Feed, user: User) {
+    console.log(` - ID:      ${feed.id}`);
+    console.log(` - Created: ${feed.createdAt}`);
+    console.log(` - Updated: ${feed.updatedAt}`);
+    console.log(` - Name:    ${feed.name}`);
+    console.log(` - URL:     ${feed.url}`);
+    console.log(` - User:    ${user.name}`);
+}
 
 async function fetchFeed(feedURL: string): Promise<RSSFeed> {
     let headers = new Headers({
@@ -78,4 +92,27 @@ export async function handlerAgg(_: string) {
     const feedData = await fetchFeed(feedURL);
     const feedDataStr = JSON.stringify(feedData, null, 2);
     console.log(feedDataStr);
+}
+
+export async function handlerAddFeed(cmdName: string, ...args: string[]) {
+    if (args.length < 2) {
+        throw new Error(`Usage: ${cmdName} <name> <url>`)
+    }
+
+    const cfg = readConfig();
+    const user = await getUser(cfg.currentUserName);
+    if (!user) {
+        throw new Error(`Error adding feed. User ${cfg.currentUserName} does not exist`);
+    }
+
+    const feedName = args[0];
+    const feedUrl = args[1];
+
+    const feed = await createFeed(feedName, feedUrl, user.id);
+    if (!feed) {
+        throw new Error(`Error adding feed ${feedName} with URL ${feedUrl}`);
+    }
+
+    console.log("Feed added successfully:");
+    printFeed(feed, user);
 }
