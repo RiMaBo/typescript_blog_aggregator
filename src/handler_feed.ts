@@ -1,6 +1,6 @@
 import { readConfig } from "./config"
-import { getUser } from "./lib/db/queries/users"
-import { createFeed } from "./lib/db/queries/feeds"
+import { getUser, getUserByID } from "./lib/db/queries/users"
+import { createFeed, getFeeds } from "./lib/db/queries/feeds"
 import { Feed, User } from "./src/lib/db/schema";
 
 import { XMLParser } from "fast-xml-parser"
@@ -29,6 +29,7 @@ function printFeed(feed: Feed, user: User) {
     console.log(` - Name:    ${feed.name}`);
     console.log(` - URL:     ${feed.url}`);
     console.log(` - User:    ${user.name}`);
+    console.log("");
 }
 
 async function fetchFeed(feedURL: string): Promise<RSSFeed> {
@@ -115,4 +116,22 @@ export async function handlerAddFeed(cmdName: string, ...args: string[]) {
 
     console.log("Feed added successfully:");
     printFeed(feed, user);
+}
+
+export async function handlerListFeeds(_: string) {
+    const feeds = await getFeeds();
+    if (!feeds) {
+        console.log("No feeds found");
+        return;
+    }
+
+    console.log(`Found ${feeds.length} feeds:`)
+    for (const feed of feeds) {
+        const user = await getUserByID(feed.userId);
+        if (!user) {
+            throw new Error(`Failed to find user for feed ${feed.id}`);
+        }
+
+        printFeed(feed, user);
+    };
 }
