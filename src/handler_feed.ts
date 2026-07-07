@@ -1,6 +1,7 @@
-import { readConfig } from "./config"
-import { getUser, getUserByID } from "./lib/db/queries/users"
-import { createFeed, getFeeds } from "./lib/db/queries/feeds"
+import { readConfig } from "./config";
+import { getUser, getUserByID } from "./lib/db/queries/users";
+import { createFeed, getFeeds } from "./lib/db/queries/feeds";
+import { createFeedFollow } from "./lib/db/queries/feed_follows";
 import { Feed, User } from "./src/lib/db/schema";
 
 import { XMLParser } from "fast-xml-parser"
@@ -22,7 +23,7 @@ type RSSItem = {
     pubDate: string;
 };
 
-function printFeed(feed: Feed, user: User) {
+export function printFeed(feed: Feed, user: User) {
     console.log(` - ID:      ${feed.id}`);
     console.log(` - Created: ${feed.createdAt}`);
     console.log(` - Updated: ${feed.updatedAt}`);
@@ -112,6 +113,11 @@ export async function handlerAddFeed(cmdName: string, ...args: string[]) {
     const feed = await createFeed(feedName, feedUrl, user.id);
     if (!feed) {
         throw new Error(`Error adding feed ${feedName} with URL ${feedUrl}`);
+    }
+
+    const feedFollow = await createFeedFollow(user.id, feed.id);
+    if (!feedFollow) {
+        throw new Error(`Error following feed ${feedUrl}`);
     }
 
     console.log("Feed added successfully:");

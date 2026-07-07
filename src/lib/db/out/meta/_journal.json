@@ -15,6 +15,13 @@
       "when": 1783270418407,
       "tag": "0001_lying_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783459669723,
+      "tag": "0002_marvelous_justice",
+      "breakpoints": true
     }
   ]
 }
