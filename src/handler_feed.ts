@@ -1,5 +1,4 @@
-import { readConfig } from "./config";
-import { getUser, getUserByID } from "./lib/db/queries/users";
+import { getUserByID } from "./lib/db/queries/users";
 import { createFeed, getFeeds } from "./lib/db/queries/feeds";
 import { createFeedFollow } from "./lib/db/queries/feed_follows";
 import { Feed, User } from "./src/lib/db/schema";
@@ -96,15 +95,9 @@ export async function handlerAgg(_: string) {
     console.log(feedDataStr);
 }
 
-export async function handlerAddFeed(cmdName: string, ...args: string[]) {
+export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
     if (args.length < 2) {
         throw new Error(`Usage: ${cmdName} <name> <url>`)
-    }
-
-    const cfg = readConfig();
-    const user = await getUser(cfg.currentUserName);
-    if (!user) {
-        throw new Error(`Error adding feed. User ${cfg.currentUserName} does not exist`);
     }
 
     const feedName = args[0];

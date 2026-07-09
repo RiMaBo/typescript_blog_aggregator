@@ -1,19 +1,12 @@
-import { readConfig } from "./config";
-import { getUser } from "./lib/db/queries/users";
 import { getFeedByUrl } from "./lib/db/queries/feeds"
 import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feed_follows"
 import { printFeed } from "./handler_feed"
+import { User } from "./src/lib/db/schema";
 
 
-export async function handlerAddFeedFollow(cmdName: string, ...args: string[]) {
+export async function handlerAddFeedFollow(cmdName: string, user: User, ...args: string[]) {
     if (!args.length) {
         throw new Error(`Usage: ${cmdName} <url>`);
-    }
-
-    const cfg = readConfig();
-    const user = await getUser(cfg.currentUserName);
-    if (!user) {
-        throw new Error(`Error following feed. User ${cfg.currentUserName} does not exist`);
     }
 
     const url = args[0];
@@ -30,13 +23,7 @@ export async function handlerAddFeedFollow(cmdName: string, ...args: string[]) {
     console.log(`${feedFollow.userName} now successfully following feed ${feedFollow.feedName}`);
 }
 
-export async function handlerListFeedFollows(_: string) {
-    const cfg = readConfig();
-    const user = await getUser(cfg.currentUserName);
-    if (!user) {
-        throw new Error(`Error listing feed follows. User ${cfg.currentUserName} does not exist`);
-    }
-
+export async function handlerListFeedFollows(_: string, user: User) {
     const feedFollows = await getFeedFollowsForUser(user.id);
     if (!feedFollows) {
         console.log(`${user.name} is not following any feeds`);
