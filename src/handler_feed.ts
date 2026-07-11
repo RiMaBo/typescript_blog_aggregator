@@ -1,5 +1,5 @@
 import { getUserByID } from "./lib/db/queries/users";
-import { createFeed, getFeeds } from "./lib/db/queries/feeds";
+import { createFeed, getFeeds, getNextFeedToFetch, markFeedFetched } from "./lib/db/queries/feeds";
 import { createFeedFollow } from "./lib/db/queries/feed_follows";
 import { Feed, User } from "./src/lib/db/schema";
 
@@ -30,6 +30,30 @@ export function printFeed(feed: Feed, user: User) {
     console.log(` - URL:     ${feed.url}`);
     console.log(` - User:    ${user.name}`);
     console.log("");
+}
+
+function parseDuration(durationStr: string): number {
+    const regex = /^(\d+)(ms|s|m|h)$/;
+    const match = durationStr.match(regex);
+    if (!match) {
+        return 0;
+    }
+
+    let durationInMs = Number(match[1]);
+
+    if (match[2] === "s") {
+        durationInMs *= 1000;
+    } else if (match[2] === "m") {
+        durationInMs *= 60 * 1000;
+    } else if (match[2] === "h") {
+        durationInMs *= 60 * 60 * 1000;
+    }
+
+    return durationInMs;
+}
+
+function handleError(err: unknown) {
+    console.error(`Error scraping feeds: ${err instanceof Error ? err.message : err}`);
 }
 
 async function fetchFeed(feedURL: string): Promise<RSSFeed> {
@@ -87,12 +111,50 @@ async function fetchFeed(feedURL: string): Promise<RSSFeed> {
     return rssFeed;
 }
 
-export async function handlerAgg(_: string) {
-    const feedURL = "https://www.wagslane.dev/index.xml";
+async function scrapeFeeds() {
+    const feedToFetch = await getNextFeedToFetch();
+    if (!feedToFetch) {
+        throw new Error("Error finding feed to fetch");
+    }
 
-    const feedData = await fetchFeed(feedURL);
-    const feedDataStr = JSON.stringify(feedData, null, 2);
-    console.log(feedDataStr);
+    const feedData = await fetchFeed(feedToFetch.url);
+    if (!feedData) {
+        throw new Error(`Error fetching feed ${feedToFetch.name}`);
+    }
+
+    await markFeedFetched(feedToFetch.id);
+
+    for (const item of feedData.channel.item) {
+        console.log(item.title);
+    }
+
+    console.log(`Feed ${feedToFetch.name} collected, ${feedData.channel.item.length} posts found`);
+}
+
+export async function handlerAgg(cmdName: string, ...args: string[]) {
+    if (!args.length) {
+        throw new Error(`Usage: ${cmdName} <time between requests>`);
+    }
+
+    const timeBetweenReqs = parseDuration(args[0]);
+    if (timeBetweenReqs === 0) {
+        throw new Error("Error parsing time between requests");
+    }
+    console.log(`Collecting feeds every ${args[0]}...`);
+
+    scrapeFeeds().catch(handleError);
+
+    const interval = setInterval(() => {
+        scrapeFeeds().catch(handleError);
+    }, timeBetweenReqs);
+
+    await new Promise<void>((resolve) => {
+        process.on("SIGINT", () => {
+            console.log("Shutting down feed aggregator...");
+            clearInterval(interval);
+            resolve();
+        });
+    });
 }
 
 export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
