@@ -1,6 +1,7 @@
 import { getUserByID } from "./lib/db/queries/users";
 import { createFeed, getFeeds, getNextFeedToFetch, markFeedFetched } from "./lib/db/queries/feeds";
 import { createFeedFollow } from "./lib/db/queries/feed_follows";
+import { createPost } from "./lib/db/queries/posts";
 import { Feed, User } from "./src/lib/db/schema";
 
 import { XMLParser } from "fast-xml-parser"
@@ -57,8 +58,8 @@ function handleError(err: unknown) {
 }
 
 async function fetchFeed(feedURL: string): Promise<RSSFeed> {
-    let headers = new Headers({
-        "Content-Type": "application/rss+xml",
+    const headers = new Headers({
+        //"Content-Type": "application/rss+xml",
         "User-Agent":   "gator",
     });
 
@@ -125,7 +126,19 @@ async function scrapeFeeds() {
     await markFeedFetched(feedToFetch.id);
 
     for (const item of feedData.channel.item) {
-        console.log(item.title);
+        console.log(`Found post: %s`, item.title);
+
+        let publishedAt = Date.parse(item.pubDate);
+        if (!publishedAt) {
+            publishedAt = new Date(Date.now()).toString();
+        }
+        publishedAt = new Date(new Date(publishedAt).toString());
+
+        const newPost = await createPost(item.title, item.link, item.description, publishedAt, feedToFetch.id);
+        if (!newPost) {
+            console.error(`Unable to create post from feed ${feedToFetch.name}`);
+            continue;
+        }
     }
 
     console.log(`Feed ${feedToFetch.name} collected, ${feedData.channel.item.length} posts found`);
